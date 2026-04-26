@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FocusFlow — Tasks & Habits</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --surface3: #2a2a38;
+    --border: #2e2e3e;
+    --accent: #5b6af7;
+    --accent2: #7b8aff;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --pink: #f472b6;
+    --text: #e8e8f0;
+    --text2: #8888a8;
+    --text3: #55556a;
+    --radius: 12px;
+    --sidebar: 240px;
+  }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    overflow: hidden;
+    font-size: 15px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .notion-status {
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .notion-status .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+  }
+
+  .notion-status.connected .dot { background: var(--green); }
+  .notion-status.connected { color: var(--green); }
+
+  .sidebar-nav {
+    padding: 12px 8px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 8px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent)18; color: var(--accent2); }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-count {
+    margin-left: auto;
+    background: var(--surface3);
+    color: var(--text2);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .nav-item.active .nav-count { background: var(--accent)30; color: var(--accent2); }
+
+  .list-item { cursor: pointer; }
+
+  .sidebar-bottom {
+    padding: 12px 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .settings-btn:hover { background: var(--surface2); color: var(--text); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .hamburger span {
+    width: 20px; height: 2px;
+    background: var(--text2);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .sync-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .sync-btn:hover { background: var(--surface3); color: var(--text); }
+  .sync-btn.syncing { color: var(--accent); border-color: var(--accent)50; }
+  .sync-btn.syncing .sync-icon { animation: spin 1s linear infinite; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ADD TASK */
+  .add-task-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    transition: border-color 0.15s;
+  }
+
+  .add-task-box:focus-within { border-color: var(--accent)80; }
+
+  .add-task-box input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .add-task-box input::placeholder { color: var(--text3); }
+
+  .add-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .add-btn:hover { background: var(--accent2); }
+
+  /* TASK GROUP */
+  .task-group { margin-bottom: 24px; }
+
+  .task-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .task-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .task-group-count {
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 500;
+  }
+
+  .task-group-chevron {
+    margin-left: auto;
+    color: var(--text3);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .task-group.collapsed .task-group-chevron { transform: rotate(-90deg); }
+  .task-group.collapsed .task-list { display: none; }
+
+  /* TASK ITEM */
+  .task-list { display: flex; flex-direction: column; gap: 3px; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-item:hover { border-color: var(--accent)40; background: var(--surface2); }
+
+  .task-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .task-item:hover .task-check { border-color: var(--accent); }
+  .task-check.done { background: var(--accent); border-color: var(--accent); }
+  .task-check.done::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .task-text.done { text-decoration: line-through; color: var(--text3); }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .task-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tag-year { background: #5b6af720; color: #7b8aff; }
+  .tag-month { background: #34d39920; color: #34d399; }
+  .tag-week { background: #fbbf2420; color: #fbbf24; }
+  .tag-task { background: #f472b620; color: #f472b6; }
+
+  .task-notion-icon {
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+
+  .task-notion-icon:hover { color: var(--text); }
+
+  .task-delete {
+    opacity: 0;
+    font-size: 14px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+
+  .task-item:hover .task-delete { opacity: 1; }
+  .task-delete:hover { color: var(--red); }
+
+  /* EMPTY */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text3);
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; }
+  .empty-sub { font-size: 13px; margin-top: 4px; color: var(--text3); }
+
+  /* ═══════════════════════ HABIT TRACKER ═══════════════════════ */
+  .habit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .add-habit-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .add-habit-btn:hover { background: var(--accent2); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  /* HABIT CARD */
+  .habit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    animation: slideIn 0.2s ease;
+  }
+
+  .habit-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .habit-emoji {
+    width: 38px;
+    height: 38px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .habit-info { flex: 1; }
+
+  .habit-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .habit-streak-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--yellow);
+  }
+
+  .habit-pct {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .habit-check-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .habit-check-btn.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .habit-check-btn:hover:not(.checked) { border-color: var(--green); }
+
+  .habit-delete {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .habit-delete:hover { background: var(--surface2); color: var(--red); }
+
+  /* GRID */
+  .habit-grid-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .habit-grid {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+  }
+
+  .grid-cell {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--surface2);
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .grid-cell.done-1 { background: #34d39940; }
+  .grid-cell.done-2 { background: #34d39970; }
+  .grid-cell.done-3 { background: #34d399; }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* ═══════════════════════ MODAL ═══════════════════════ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000080;
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-close {
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .form-input:focus { border-color: var(--accent); }
+
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .emoji-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .emoji-opt {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .emoji-opt:hover { background: var(--surface3); }
+  .emoji-opt.selected { border-color: var(--accent); background: var(--accent)20; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    margin-top: 4px;
+  }
+
+  .submit-btn:hover { background: var(--accent2); }
+
+  /* SETTINGS */
+  .settings-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .settings-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .settings-row label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .settings-row .form-input {
+    max-width: 260px;
+  }
+
+  .save-settings-btn {
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    margin-top: 12px;
+  }
+
+  .save-settings-btn:hover { background: var(--accent2); }
+
+  .info-box {
+    background: var(--accent)15;
+    border: 1px solid var(--accent)30;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+
+  .info-box code {
+    background: var(--surface2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent2);
+    font-family: monospace;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface3);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* OVERLAY for sidebar on mobile */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000060;
+    z-index: 90;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      transform: translateX(-100%);
+    }
+
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-overlay.open { display: block; }
+
+    .hamburger { display: flex; }
+
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-value { font-size: 22px; }
+    .stat-label { font-size: 11px; }
+
+    .content { padding: 14px; }
+    .topbar { padding: 12px 14px; }
+    .page-title { font-size: 17px; }
+
+    .grid-cell { width: 12px; height: 12px; }
+
+    .modal { border-radius: 20px 20px 0 0; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      FocusFlow
+    </div>
+    <div class="notion-status" id="notionStatus">
+      <span class="dot"></span>
+      <span id="notionStatusText">Not connected</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Tasks</div>
+    <div class="nav-item active" onclick="showView('today')" id="nav-today">
+      <span class="icon">☀️</span> My Day
+      <span class="nav-count" id="count-today">0</span>
+    </div>
+    <div class="nav-item" onclick="showView('important')" id="nav-important">
+      <span class="icon">⭐</span> Important
+      <span class="nav-count" id="count-important">0</span>
+    </div>
+    <div class="nav-item" onclick="showView('all')" id="nav-all">
+      <span class="icon">📋</span> All Tasks
+      <span class="nav-count" id="count-all">0</span>
+    </div>
+    <div class="nav-item" onclick="showView('goals')" id="nav-goals">
+      <span class="icon">🎯</span> Goals
+      <span class="nav-count" id="count-goals">0</span>
+    </div>
+
+    <div class="nav-section-label" style="margin-top:8px">Habits</div>
+    <div class="nav-item" onclick="showView('habits')" id="nav-habits">
+      <span class="icon">🔥</span> Habit Tracker
+      <span class="nav-count" id="count-habits">0</span>
+    </div>
+
+    <div class="nav-section-label" style="margin-top:8px">Notion</div>
+    <div class="nav-item" onclick="showView('notion')" id="nav-notion">
+      <span class="icon">🔗</span> Notion Sync
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="settings-btn" onclick="showView('settings')">
+      <span style="font-size:16px">⚙️</span> Settings
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="page-title" id="pageTitle">My Day</div>
+    <button class="sync-btn" id="syncBtn" onclick="syncWithNotion()">
+      <span class="sync-icon">↻</span> Sync
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- TODAY VIEW -->
+    <div class="view active" id="view-today">
+      <div class="add-task-box">
+        <span style="color:var(--text3);font-size:18px">+</span>
+        <input type="text" placeholder="Add a task for today..." id="addTaskInput" onkeydown="if(event.key==='Enter')addTask('today')">
+        <button class="add-btn" onclick="addTask('today')">+</button>
+      </div>
+      <div id="tasks-today"></div>
+    </div>
+
+    <!-- IMPORTANT VIEW -->
+    <div class="view" id="view-important">
+      <div class="add-task-box">
+        <span style="color:var(--text3);font-size:18px">⭐</span>
+        <input type="text" placeholder="Add an important task..." id="addImportantInput" onkeydown="if(event.key==='Enter')addTask('important')">
+        <button class="add-btn" onclick="addTask('important')">+</button>
+      </div>
+      <div id="tasks-important"></div>
+    </div>
+
+    <!-- ALL TASKS VIEW -->
+    <div class="view" id="view-all">
+      <div id="tasks-all"></div>
+    </div>
+
+    <!-- GOALS VIEW -->
+    <div class="view" id="view-goals">
+      <div class="add-task-box">
+        <span style="color:var(--text3);font-size:16px">🎯</span>
+        <input type="text" placeholder="Add a goal..." id="addGoalInput" onkeydown="if(event.key==='Enter')openGoalModal()">
+        <button class="add-btn" onclick="openGoalModal()">+</button>
+      </div>
+      <div id="tasks-goals"></div>
+    </div>
+
+    <!-- HABITS VIEW -->
+    <div class="view" id="view-habits">
+      <div class="habit-header">
+        <div style="font-size:13px;color:var(--text2)">Track your daily habits</div>
+        <button class="add-habit-btn" onclick="openHabitModal()">+ New Habit</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-streak">0</div>
+          <div class="stat-label">🔥 Best Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-today-done">0</div>
+          <div class="stat-label">✅ Today Done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-rate">0%</div>
+          <div class="stat-label">📈 Avg Rate</div>
+        </div>
+      </div>
+
+      <div id="habits-list"></div>
+    </div>
+
+    <!-- NOTION SYNC VIEW -->
+    <div class="view" id="view-notion">
+      <div class="settings-section">
+        <div class="settings-title">🔗 Notion Sync Status</div>
+        <div id="notionSyncStatus" style="color:var(--text2);font-size:14px;line-height:1.7">
+          Configure your Notion API key in Settings to enable sync.
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="save-settings-btn" onclick="syncWithNotion()">↻ Sync Now</button>
+          <button class="save-settings-btn" style="background:var(--surface3);color:var(--text2)" onclick="showView('settings')">⚙️ Configure</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">📋 Sync Log</div>
+        <div id="syncLog" style="font-size:13px;color:var(--text3);line-height:1.8;font-family:monospace">
+          No sync events yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div class="view" id="view-settings">
+      <div class="settings-section">
+        <div class="settings-title">🔑 Notion API</div>
+        <div class="settings-row">
+          <label>API Key</label>
+          <input class="form-input" type="password" id="cfg-apiKey" placeholder="secret_xxxxxxxxxxxx">
+        </div>
+        <div class="settings-row">
+          <label>Tasks DB ID</label>
+          <input class="form-input" type="text" id="cfg-tasksDb" placeholder="32-char database ID">
+        </div>
+        <div class="settings-row">
+          <label>Goals DB ID</label>
+          <input class="form-input" type="text" id="cfg-goalsDb" placeholder="32-char database ID">
+        </div>
+        <button class="save-settings-btn" onclick="saveSettings()">💾 Save Settings</button>
+        <div class="info-box">
+          <strong>How to get your Notion API Key:</strong><br>
+          1. Go to <code>notion.so/my-integrations</code><br>
+          2. Create a new integration → copy the secret<br>
+          3. Share your database with the integration<br>
+          4. Copy the DB ID from the database URL<br>
+          <br>
+          ⚠️ Keys are stored locally in your browser only.
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">🗑️ Data</div>
+        <div class="settings-row">
+          <label style="color:var(--red)">Clear all local data</label>
+          <button class="save-settings-btn" style="background:var(--red);margin-top:0" onclick="clearData()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ADD TASK MODAL (for goals) -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal">
+    <div class="modal-title">
+      Add Goal
+      <span class="modal-close" onclick="closeModal('goalModal')">×</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Goal Name</label>
+      <input class="form-input" id="goalName" placeholder="e.g. Read 12 books this year">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Time Frame</label>
+        <select class="form-select" id="goalTimeframe">
+          <option value="Year">📅 Year</option>
+          <option value="Month">🗓️ Month</option>
+          <option value="Week">📆 Week</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="goalCategory">
+          <option>Health</option>
+          <option>Career</option>
+          <option>Finance</option>
+          <option>Learning</option>
+          <option>Personal</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="addGoal()">Add Goal</button>
+  </div>
+</div>
+
+<!-- HABIT MODAL -->
+<div class="modal-overlay" id="habitModal">
+  <div class="modal">
+    <div class="modal-title">
+      New Habit
+      <span class="modal-close" onclick="closeModal('habitModal')">×</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Habit Name</label>
+      <input class="form-input" id="habitName" placeholder="e.g. Morning workout">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pick an Icon</label>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <button class="submit-btn" onclick="addHabit()">Start Habit</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const EMOJIS = ['💪','📚','🧘','🏃','💧','🥗','😴','✍️','🎯','🎸','💻','🌱','☀️','🧠','❤️','🎨'];
+const TODAY = new Date().toISOString().split('T')[0];
+const WEEK_DAYS = 52; // cells in grid
+
+let state = {
+  tasks: [],
+  habits: [],
+  config: { apiKey: '', tasksDb: '', goalsDb: '' },
+  selectedEmoji: '💪',
+  syncLog: []
+};
+
+function save() {
+  localStorage.setItem('ff_state', JSON.stringify({ tasks: state.tasks, habits: state.habits, config: state.config, syncLog: state.syncLog }));
+}
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('ff_state') || '{}');
+    state.tasks = d.tasks || [];
+    state.habits = d.habits || [];
+    state.config = d.config || { apiKey: '', tasksDb: '', goalsDb: '' };
+    state.syncLog = d.syncLog || [];
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════
+const VIEWS = { today:'My Day', important:'Important', all:'All Tasks', goals:'Goals', habits:'Habit Tracker', notion:'Notion Sync', settings:'Settings' };
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const nav = document.getElementById('nav-' + v);
+  if(nav) nav.classList.add('active');
+  document.getElementById('pageTitle').textContent = VIEWS[v] || v;
+  closeSidebar();
+  if(v === 'settings') loadSettingsForm();
+  if(v === 'notion') renderSyncLog();
+  renderAll();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════════
+function addTask(list) {
+  const inputId = list === 'important' ? 'addImportantInput' : list === 'goals' ? 'addGoalInput' : 'addTaskInput';
+  const input = document.getElementById(inputId);
+  const text = input.value.trim();
+  if(!text) return;
+
+  const task = {
+    id: Date.now().toString(),
+    text,
+    done: false,
+    list, // today | important | goals
+    timeframe: list === 'goals' ? 'Year' : '',
+    created: TODAY,
+    notionId: null
+  };
+
+  state.tasks.push(task);
+  input.value = '';
+  save();
+  renderAll();
+  toast('Task added ✓');
+
+  if(state.config.apiKey && state.config.tasksDb) pushTaskToNotion(task);
+}
+
+function addGoal() {
+  const name = document.getElementById('goalName').value.trim();
+  if(!name) return;
+  const task = {
+    id: Date.now().toString(),
+    text: name,
+    done: false,
+    list: 'goals',
+    timeframe: document.getElementById('goalTimeframe').value,
+    category: document.getElementById('goalCategory').value,
+    created: TODAY,
+    notionId: null
+  };
+  state.tasks.push(task);
+  document.getElementById('goalName').value = '';
+  closeModal('goalModal');
+  save();
+  renderAll();
+  toast('Goal added ✓');
+  if(state.config.apiKey && state.config.goalsDb) pushGoalToNotion(task);
+}
+
+function toggleTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if(t) { t.done = !t.done; save(); renderAll(); }
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  save();
+  renderAll();
+  toast('Deleted');
+}
+
+function renderTaskItem(t) {
+  const tagMap = { Year:'tag-year', Month:'tag-month', Week:'tag-week', today:'tag-task', important:'tag-task' };
+  const tagLabel = t.timeframe || (t.list === 'important' ? 'Important' : 'Task');
+  const tagClass = tagMap[t.timeframe] || 'tag-task';
+
+  return `<div class="task-item" id="task-${t.id}">
+    <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')"></div>
+    <div class="task-text ${t.done?'done':''}">${esc(t.text)}</div>
+    <div class="task-meta">
+      ${t.timeframe ? `<span class="task-tag ${tagClass}">${t.timeframe}</span>` : ''}
+      ${t.notionId ? `<span class="task-notion-icon" title="Synced to Notion">N</span>` : ''}
+      <span class="task-delete" onclick="deleteTask('${t.id}')">🗑</span>
+    </div>
+  </div>`;
+}
+
+function renderTasks(containerId, filterFn, groupByTimeframe) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let filtered = state.tasks.filter(filterFn);
+
+  if(!filtered.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✨</div><div class="empty-text">All clear!</div><div class="empty-sub">Add something to get started</div></div>`;
+    return;
+  }
+
+  if(groupByTimeframe) {
+    const groups = { Year: [], Month: [], Week: [] };
+    filtered.forEach(t => { const g = groups[t.timeframe]; if(g) g.push(t); else groups.Week.push(t); });
+    el.innerHTML = Object.entries(groups).filter(([,v])=>v.length).map(([name, tasks]) =>
+      `<div class="task-group">
+        <div class="task-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="task-group-title">${name === 'Year' ? '📅 Yearly' : name === 'Month' ? '🗓️ Monthly' : '📆 Weekly'}</span>
+          <span class="task-group-count">${tasks.length}</span>
+          <span class="task-group-chevron">▾</span>
+        </div>
+        <div class="task-list">${tasks.map(renderTaskItem).join('')}</div>
+      </div>`
+    ).join('');
+    return;
+  }
+
+  const pending = filtered.filter(t => !t.done);
+  const done = filtered.filter(t => t.done);
+  let html = `<div class="task-group"><div class="task-list">${pending.map(renderTaskItem).join('')}</div></div>`;
+  if(done.length) {
+    html += `<div class="task-group collapsed">
+      <div class="task-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="task-group-title">Completed</span>
+        <span class="task-group-count">${done.length}</span>
+        <span class="task-group-chevron">▾</span>
+      </div>
+      <div class="task-list">${done.map(renderTaskItem).join('')}</div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  HABITS
+// ══════════════════════════════════════════
+function addHabit() {
+  const name = document.getElementById('habitName').value.trim();
+  if(!name) return;
+  const habit = {
+    id: Date.now().toString(),
+    name,
+    emoji: state.selectedEmoji,
+    completions: {}, // { 'YYYY-MM-DD': true }
+    streak: 0
+  };
+  state.habits.push(habit);
+  document.getElementById('habitName').value = '';
+  closeModal('habitModal');
+  save();
+  renderHabits();
+  toast('Habit created 🔥');
+}
+
+function toggleHabit(id) {
+  const h = state.habits.find(h => h.id === id);
+  if(!h) return;
+  if(h.completions[TODAY]) {
+    delete h.completions[TODAY];
+  } else {
+    h.completions[TODAY] = true;
+  }
+  h.streak = calcStreak(h);
+  save();
+  renderHabits();
+}
+
+function deleteHabit(id) {
+  state.habits = state.habits.filter(h => h.id !== id);
+  save();
+  renderHabits();
+  toast('Habit removed');
+}
+
+function calcStreak(h) {
+  let streak = 0;
+  let d = new Date();
+  while(true) {
+    const key = d.toISOString().split('T')[0];
+    if(h.completions[key]) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function calcRate(h) {
+  const keys = Object.keys(h.completions).length;
+  const created = h.completions;
+  const days = Math.max(1, Math.ceil((Date.now() - (Object.keys(created)[0] ? new Date(Object.keys(created).sort()[0]) : new Date())) / 86400000)) || 1;
+  return Math.round((keys / Math.max(days, 7)) * 100);
+}
+
+function buildGrid(h) {
+  const cells = [];
+  for(let i = WEEK_DAYS * 7 - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const done = h.completions[key] ? 3 : 0;
+    cells.push(`<div class="grid-cell ${done ? 'done-'+done : ''}" title="${key}"></div>`);
+  }
+  return cells.join('');
+}
+
+function renderHabits() {
+  const el = document.getElementById('habits-list');
+  if(!el) return;
+
+  if(!state.habits.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-text">No habits yet</div><div class="empty-sub">Start building your first habit above</div></div>`;
+    updateHabitStats();
+    return;
+  }
+
+  el.innerHTML = state.habits.map(h => {
+    const checked = !!h.completions[TODAY];
+    const streak = h.streak || 0;
+    const rate = Math.min(100, calcRate(h));
+    return `<div class="habit-card">
+      <div class="habit-top">
+        <div class="habit-emoji">${h.emoji}</div>
+        <div class="habit-info">
+          <div class="habit-name">${esc(h.name)}</div>
+          <div class="habit-streak-row">
+            <div class="streak-badge">🔥 ${streak} day streak</div>
+            <div class="habit-pct">${rate}% rate</div>
+          </div>
+        </div>
+        <button class="habit-check-btn ${checked?'checked':''}" onclick="toggleHabit('${h.id}')">${checked?'✓':'○'}</button>
+        <button class="habit-delete" onclick="deleteHabit('${h.id}')">🗑</button>
+      </div>
+      <div class="habit-grid-label">Last 52 weeks</div>
+      <div class="habit-grid">${buildGrid(h)}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width:${rate}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateHabitStats();
+}
+
+function updateHabitStats() {
+  const bestStreak = state.habits.reduce((max, h) => Math.max(max, h.streak||0), 0);
+  const todayDone = state.habits.filter(h => h.completions[TODAY]).length;
+  const avgRate = state.habits.length ? Math.round(state.habits.reduce((sum, h) => sum + Math.min(100, calcRate(h)), 0) / state.habits.length) : 0;
+
+  document.getElementById('stat-streak').textContent = bestStreak;
+  document.getElementById('stat-today-done').textContent = todayDone;
+  document.getElementById('stat-rate').textContent = avgRate + '%';
+  document.getElementById('count-habits').textContent = state.habits.length;
+}
+
+// ══════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════
+function renderAll() {
+  renderTasks('tasks-today', t => t.list === 'today');
+  renderTasks('tasks-important', t => t.list === 'important');
+  renderTasks('tasks-all', t => true);
+  renderTasks('tasks-goals', t => t.list === 'goals', true);
+  renderHabits();
+  updateCounts();
+}
+
+function updateCounts() {
+  document.getElementById('count-today').textContent = state.tasks.filter(t => t.list==='today' && !t.done).length;
+  document.getElementById('count-important').textContent = state.tasks.filter(t => t.list==='important' && !t.done).length;
+  document.getElementById('count-all').textContent = state.tasks.filter(t => !t.done).length;
+  document.getElementById('count-goals').textContent = state.tasks.filter(t => t.list==='goals' && !t.done).length;
+}
+
+// ══════════════════════════════════════════
+//  NOTION SYNC
+// ══════════════════════════════════════════
+async function syncWithNotion() {
+  if(!state.config.apiKey) { toast('⚠️ Set API key in Settings'); showView('settings'); return; }
+
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('syncing');
+  btn.querySelector('.sync-icon').textContent = '↻';
+
+  try {
+    await Promise.all([
+      state.config.tasksDb ? pullFromNotion(state.config.tasksDb, 'today') : null,
+      state.config.goalsDb ? pullFromNotion(state.config.goalsDb, 'goals') : null
+    ].filter(Boolean));
+    addLog('✅ Sync complete — ' + new Date().toLocaleTimeString());
+    updateNotionStatus(true);
+    toast('Synced with Notion ✓');
+  } catch(e) {
+    addLog('❌ Sync failed: ' + e.message);
+    toast('Sync failed — check API key');
+  }
+
+  btn.classList.remove('syncing');
+  btn.querySelector('.sync-icon').textContent = '↻';
+  save();
+  renderAll();
+}
+
+async function pullFromNotion(dbId, list) {
+  const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.notion.com/v1/databases/${dbId}/query`)}`;
+
+  const res = await fetch(proxy, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28', 'Authorization': 'Bearer ' + state.config.apiKey },
+    body: JSON.stringify({ page_size: 100 })
+  });
+
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+
+  (data.results || []).forEach(page => {
+    const existing = state.tasks.find(t => t.notionId === page.id);
+    if(existing) return;
+
+    const props = page.properties || {};
+    const name = props.Name?.title?.[0]?.plain_text || props.Task?.title?.[0]?.plain_text || 'Untitled';
+    const done = props.Status?.select?.name === 'Done' || props.Checkbox?.checkbox === true || false;
+    const timeframe = props['TIME FRAME']?.select?.name || '';
+
+    state.tasks.push({
+      id: Date.now().toString() + Math.random(),
+      text: name,
+      done,
+      list,
+      timeframe,
+      created: TODAY,
+      notionId: page.id
+    });
+  });
+
+  addLog(`📥 Pulled ${data.results?.length || 0} items from ${list} DB`);
+}
+
+async function pushTaskToNotion(task) {
+  if(!state.config.tasksDb || !state.config.apiKey) return;
+  try {
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.notion.com/v1/pages')}`;
+    const res = await fetch(proxy, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28', 'Authorization': 'Bearer ' + state.config.apiKey },
+      body: JSON.stringify({
+        parent: { database_id: state.config.tasksDb },
+        properties: {
+          Name: { title: [{ text: { content: task.text } }] },
+          Checkbox: { checkbox: false }
+        }
+      })
+    });
+    const data = await res.json();
+    task.notionId = data.id;
+    save();
+    addLog('⬆️ Pushed task: ' + task.text.slice(0,30));
+  } catch(e) { addLog('❌ Push failed: ' + e.message); }
+}
+
+async function pushGoalToNotion(task) {
+  if(!state.config.goalsDb || !state.config.apiKey) return;
+  try {
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.notion.com/v1/pages')}`;
+    const res = await fetch(proxy, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28', 'Authorization': 'Bearer ' + state.config.apiKey },
+      body: JSON.stringify({
+        parent: { database_id: state.config.goalsDb },
+        properties: {
+          Name: { title: [{ text: { content: task.text } }] },
+          'TIME FRAME': { select: { name: task.timeframe } },
+          CATEGORY: { multi_select: [{ name: task.category || 'Other' }] }
+        }
+      })
+    });
+    const data = await res.json();
+    task.notionId = data.id;
+    save();
+    addLog('⬆️ Pushed goal: ' + task.text.slice(0,30));
+  } catch(e) { addLog('❌ Goal push failed: ' + e.message); }
+}
+
+function updateNotionStatus(connected) {
+  const el = document.getElementById('notionStatus');
+  const txt = document.getElementById('notionStatusText');
+  el.className = 'notion-status' + (connected ? ' connected' : '');
+  txt.textContent = connected ? 'Connected to Notion' : 'Not connected';
+
+  const syncEl = document.getElementById('notionSyncStatus');
+  if(syncEl) syncEl.innerHTML = connected
+    ? `✅ Connected<br>Tasks DB: <code>${state.config.tasksDb?.slice(0,8) || '—'}...</code><br>Goals DB: <code>${state.config.goalsDb?.slice(0,8) || '—'}...</code>`
+    : 'Configure your Notion API key in Settings to enable sync.';
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+function loadSettingsForm() {
+  document.getElementById('cfg-apiKey').value = state.config.apiKey || '';
+  document.getElementById('cfg-tasksDb').value = state.config.tasksDb || '';
+  document.getElementById('cfg-goalsDb').value = state.config.goalsDb || '';
+}
+
+function saveSettings() {
+  state.config.apiKey = document.getElementById('cfg-apiKey').value.trim();
+  state.config.tasksDb = document.getElementById('cfg-tasksDb').value.trim().replace(/-/g,'');
+  state.config.goalsDb = document.getElementById('cfg-goalsDb').value.trim().replace(/-/g,'');
+  save();
+  updateNotionStatus(!!state.config.apiKey);
+  toast('Settings saved ✓');
+}
+
+function clearData() {
+  if(!confirm('Clear all local data?')) return;
+  localStorage.removeItem('ff_state');
+  state = { tasks:[], habits:[], config:{apiKey:'',tasksDb:'',goalsDb:''}, selectedEmoji:'💪', syncLog:[] };
+  renderAll();
+  toast('Data cleared');
+}
+
+// ══════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════
+function openGoalModal() {
+  document.getElementById('goalName').value = document.getElementById('addGoalInput')?.value || '';
+  openModal('goalModal');
+}
+
+function openHabitModal() {
+  buildEmojiGrid();
+  openModal('habitModal');
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById(id).querySelector('input');
+    if(inp) inp.focus();
+  }, 100);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target === el) closeModal(el.id); });
+});
+
+function buildEmojiGrid() {
+  document.getElementById('emojiGrid').innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt ${e===state.selectedEmoji?'selected':''}" onclick="selectEmoji('${e}')">${e}</div>`
+  ).join('');
+}
+
+function selectEmoji(e) {
+  state.selectedEmoji = e;
+  document.querySelectorAll('.emoji-opt').forEach(el => el.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function addLog(msg) {
+  state.syncLog.unshift('[' + new Date().toLocaleTimeString() + '] ' + msg);
+  state.syncLog = state.syncLog.slice(0, 30);
+  renderSyncLog();
+}
+
+function renderSyncLog() {
+  const el = document.getElementById('syncLog');
+  if(el) el.innerHTML = state.syncLog.length ? state.syncLog.join('<br>') : 'No sync events yet.';
+}
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+load();
+renderAll();
+if(state.config.apiKey) updateNotionStatus(true);
+buildEmojiGrid();
+</script>
+</body>
+</html>
